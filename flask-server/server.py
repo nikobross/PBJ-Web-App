@@ -1,10 +1,67 @@
 from flask import Flask
+import requests
+import pandas as pd
 
 app = Flask(__name__)
 
-@app.route("/members")
+def UUIDtoIGN(UUID):
+    r = requests.get(f"https://api.ashcon.app/mojang/v2/user/{UUID}")
+    rdata = r.json()
+    
+    try:
+        name = rdata["username"]
+    except Exception as e:
+        return 'Invalid UUID / Name Search Error'
+    
+    return name
+
+def FindPlayerStatusWithUUID(uuid, APIKey):
+
+    # requests
+    req = requests.get(f"https://api.hypixel.net/status?key={APIKey}&uuid={uuid}")
+    redq = req.json()
+    
+    return redq
+
+def scan_with_keys(APIKeys):
+
+    APIKeyUsed = APIKeys[0]
+    KeysUsed = 0
+    names_pieces = {}
+
+    df = pd.read_csv("NewExoticData.txt", sep=" ", header=None, names=["Hex", "Piece", "uuid"])
+
+
+    StartIndex = 10_050
+
+    for index, id in enumerate(df['uuid'][StartIndex:]):
+        
+        PlayerData = FindPlayerStatusWithUUID(id, APIKeyUsed)
+        
+        if PlayerData['success'] == False:
+            KeysUsed += 1
+            
+            if KeysUsed == len(APIKeys):
+                break
+            
+            APIKeyUsed = APIKeys[KeysUsed]
+            PlayerData = FindPlayerStatusWithUUID(id, APIKeyUsed)
+        
+        if PlayerData['session']['online']:
+            name = UUIDtoIGN(id)
+            text = f"\nPlayer {name} is online and has {df['Piece'][index + StartIndex + 1]} with hex {df['Hex'][index + StartIndex + 1]} @everyone"
+            print(text)
+            names_pieces[name] = df['Piece'][index + StartIndex + 1]
+
+        else:
+            print(index, end = ' ')
+        
+    return names_pieces
+
+
+@app.route("/search")
 def members():
-    return {"members": ["Niko", "name2", "name3"]}
+    return scan_with_keys(['9abda6f6-6cc9-447a-b90e-3d82f3dbb0eb'])
 
 if __name__ == "__main__":
     app.run(debug=True)

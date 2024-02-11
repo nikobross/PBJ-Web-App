@@ -27,7 +27,7 @@ def scan_with_keys(APIKeys):
 
     APIKeyUsed = APIKeys[0]
     KeysUsed = 0
-    names_pieces = {}
+    names_pieces = []
 
     df = pd.read_csv("NewExoticData.txt", sep=" ", header=None, names=["Hex", "Piece", "uuid"])
 
@@ -51,17 +51,21 @@ def scan_with_keys(APIKeys):
             name = UUIDtoIGN(id)
             text = f"\nPlayer {name} is online and has {df['Piece'][index + StartIndex + 1]} with hex {df['Hex'][index + StartIndex + 1]} @everyone"
             print(text)
-            names_pieces[name] = df['Piece'][index + StartIndex + 1]
+            names_pieces.append(name)
 
         else:
             print(index, end = ' ')
-        
+    
+    print('finished scanning')    
     return names_pieces
 
 
 @app.route("/search")
-def members():
-    return scan_with_keys(['9abda6f6-6cc9-447a-b90e-3d82f3dbb0eb'])
+def search():
+    users = scan_with_keys(['a017ca22-2a12-47b3-bfba-5a158918fca3'])
+    
+    return {'users': users}
+
 
 if __name__ == "__main__":
     app.run(debug=True)

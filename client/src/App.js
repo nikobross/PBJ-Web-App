@@ -82,13 +82,15 @@ const HamburgerMenu = () => {
       {isOpen && (
         <div className="menu">
           <div><a href="#">Home</a></div>
+          <div><a href="#">API Keys</a></div>
           <div><a href="#">About</a></div>
-          <div><a href="#">Contact</a></div>
+          <div><a href="#">Sign In</a></div>
+          <div><a href="#">Log Out</a></div>
         </div>
       )}
     </div>
   );
-}
+};
 
 function App() {
     const [currentPage, setCurrentPage] = useState('start');

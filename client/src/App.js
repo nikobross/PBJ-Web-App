@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-
+import './App.css';
+import './Button.css';
 
 function StartPage({ onStartButtonClick }) {
     return (
-      <div>
-        <h1>Start Page</h1>
-        <button onClick={onStartButtonClick}>Search</button>
+      <div className="page1">
+        <h1>PB&J Exotic Scanner</h1>
+        <button className="custom-button1" onClick={onStartButtonClick}>Search</button>
       </div>
     );
   }
@@ -47,10 +48,10 @@ function SearchPage({ onBackButtonClick }) {
     }, [])
 
     return (
-        <div>
+        <div className="page2">
             
           {typeof data.users === 'undefined' ? (
-              <p>Loading...</p>
+              <p>Scanning...</p>
           ) : data.users.length === 0 ? (
               <p>No users found</p>
           ) : (
@@ -59,7 +60,7 @@ function SearchPage({ onBackButtonClick }) {
               ))
           )}
 
-        <button onClick={onBackButtonClick}>Back to Start</button>
+        <button className="custom-button1" onClick={onBackButtonClick}>Back to Start</button>
         </div>
     )
 }

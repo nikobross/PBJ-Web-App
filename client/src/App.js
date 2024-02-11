@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './App.css';
 import './Button.css';
+import { RxHamburgerMenu } from "react-icons/rx";
 
 function StartPage({ onStartButtonClick }) {
     return (
@@ -35,7 +36,7 @@ function StartPage({ onStartButtonClick }) {
 function SearchPage({ onBackButtonClick }) {
 
     const [data, setData] = useState([{}])
-
+    
     useEffect(() => {
         fetch("/search").then(
             res => res.json()
@@ -66,6 +67,29 @@ function SearchPage({ onBackButtonClick }) {
 }
 
 
+const HamburgerMenu = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div>
+      <button onClick={toggleMenu} className="hamburger">
+        <RxHamburgerMenu />
+      </button>
+      {isOpen && (
+        <div className="menu">
+          <div><a href="#">Home</a></div>
+          <div><a href="#">About</a></div>
+          <div><a href="#">Contact</a></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
     const [currentPage, setCurrentPage] = useState('start');
   
@@ -79,6 +103,7 @@ function App() {
   
     return (
       <div>
+        <HamburgerMenu />
         {currentPage === 'start' && (
           <StartPage onStartButtonClick={handleStartButtonClick} />
         )}

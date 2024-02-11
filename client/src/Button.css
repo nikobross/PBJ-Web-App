@@ -1,5 +1,6 @@
 .custom-button1 {
     background-color: #a665cb;
+    box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
     color: #fff;
     padding: 10px 20px;
     border: none;
@@ -23,3 +24,42 @@
   .custom-button2:hover {
     background-color: #ff1493;
   }
+
+.hamburger {
+    font-size: 30px;
+    background-color: #a665cb;
+    border: 2px solid transparent; /* Add a border */
+    border-radius: 10px; /* Make the border rounded */
+    box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
+    cursor: pointer;
+    position: fixed; /* Make the button fixed */
+    top: 0; /* Position it at the top */
+    left: 0; /* Position it at the right */
+    color: white; /* Set the color */
+    padding: 7px; /* Add some padding */
+    z-index: 1001; /* Make sure it's above everything else */
+    width: 50px; /* Set a fixed width */
+    height: 50px; /* Set a fixed height */
+    transform: translate(20px, 20px); /* Move the icon to the right by 20px and down by 20px */
+}
+  
+  .menu {
+    background-color: #bd9b75;
+    color: #fff;
+    box-shadow: 0 0 20px rgb(63, 37, 5); /* Add an outline */
+    position: fixed; /* Make the menu fixed */
+    top: 0; /* Position it at the top */
+    left: 0; /* Position it at the right */
+    width: 200px; /* Give it a width */
+    height: 100vh; /* Make it fill the height of the viewport */
+    z-index: 1000; /* Make sure it's above everything else */
+    padding-top: 80px; /* Add some padding to the top */
+    padding-left: 15px;
+  }
+  
+  .menu a {
+    display: block;
+    padding: 10px;
+    color: #fff;
+    font-size: 20px;
+  }  

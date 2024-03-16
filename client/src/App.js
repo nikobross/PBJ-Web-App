@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './App.css';
 import './Button.css';
 import { RxHamburgerMenu } from "react-icons/rx";
+import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 
 function StartPage({ onStartButtonClick }) {
     return (
@@ -66,6 +67,14 @@ function SearchPage({ onBackButtonClick }) {
     )
 }
 
+function Profile({ onStartButtonClick }) {
+  return (
+    <div className="page1">
+      <h1>Profile</h1>
+      <button className="custom-button1" onClick={onStartButtonClick}>Set Profile</button>
+    </div>
+  );
+}
 
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,20 +84,25 @@ const HamburgerMenu = () => {
   };
 
   return (
-    <div>
-      <button onClick={toggleMenu} className="hamburger">
-        <RxHamburgerMenu />
-      </button>
-      {isOpen && (
-        <div className="menu">
-          <div><a href="#">Home</a></div>
-          <div><a href="#">API Keys</a></div>
-          <div><a href="#">About</a></div>
-          <div><a href="#">Sign In</a></div>
-          <div><a href="#">Log Out</a></div>
-        </div>
-      )}
-    </div>
+    <Router>
+      <div>
+        <button onClick={toggleMenu} className="hamburger">
+          <RxHamburgerMenu />
+        </button>
+        {isOpen && (
+          <div className="menu">
+            <div><Link to="/">Home</Link></div>
+            <div><Link to="/profile">Profile</Link></div>
+            <div><a href="#">About</a></div>
+            <div><a href="#">Sign In</a></div>
+            <div><a href="#">Log Out</a></div>
+          </div>
+        )}
+      </div>
+      <Routes>
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </Router>
   );
 };
 

@@ -29,7 +29,7 @@ def scan_with_keys(APIKeys):
     df = pd.read_csv("NewExoticData.txt", sep=" ", header=None, names=["Hex", "Piece", "uuid"])
 
 
-    StartIndex = 10_050
+    StartIndex = 0
 
     for index, id in enumerate(df['uuid'][StartIndex:]):
         

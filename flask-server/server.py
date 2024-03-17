@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 import requests
 import pandas as pd
 
@@ -63,7 +62,7 @@ def scan_with_keys(APIKeys):
 
 @app.route("/search")
 def search():
-    users = scan_with_keys(['bfa1651d-fba7-4a2a-9eae-e0e4a6891fc6'])
+    users = scan_with_keys(['b9ef7f08-0ac2-49b1-ba0c-6f2250ae4614'])
     
     return {'users': users}
 

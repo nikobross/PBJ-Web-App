@@ -62,4 +62,27 @@
     padding: 10px;
     color: #fff;
     font-size: 20px;
-  }  
+  } 
+
+  .custom-text-input {
+    background-color: #a665cb;
+    margin-bottom: 20px; /* Adjust as needed */
+    box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .custom-text-input:hover {
+    background-color: #8343a8;
+  }
+
+  .custom-text-input:focus {
+    background-color: #712f97; /* Change to the color you want when the input is focused */
+  }
+
+  .custom-text-input::placeholder {
+    color: #d9d9d9; /* Change to the color you want for the placeholder text */
+  }

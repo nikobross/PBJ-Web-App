@@ -1,38 +1,31 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, createContext, useContext } from 'react'
 import './App.css';
 import './Button.css';
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import users from './users.json';
 
-function StartPage({ onStartButtonClick }) {
+
+function StartPage() {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const onStartButtonClick = () => {
+    if (isLoggedIn) { // Add this check
+      navigate('/search');
+    } else {
+      alert('You must be logged in to search.');
+    }
+  };
+
     return (
       <div className="page1">
         <h1>PB&J Exotic Scanner</h1>
         <button className="custom-button1" onClick={onStartButtonClick}>Search</button>
       </div>
     );
-  }
-
-  function Page2({ onBackButtonClick }) {
-    return (
-      <div>
-        <h1>This is Page 2</h1>
-        <button onClick={onBackButtonClick}>Back to Start</button>
-      </div>
-    );
-  }
-
-
-  function Page3({ onBackButtonClick }) {
-    return (
-      <div>
-        <h1>This is Page 3</h1>
-        <button onClick={onBackButtonClick}>Back to Start</button>
-        <h2>Test Text</h2>
-      </div>
-    );
-  }
-
+}
 
 function SearchPage({ onBackButtonClick }) {
 
@@ -76,6 +69,54 @@ function Profile({ onStartButtonClick }) {
   );
 }
 
+function SignIn({ onStartButtonClick }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+
+  const navigate = useNavigate();
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+  
+    // Check if there is a user with the entered username and password
+    const user = users.find(user => user.username === username && user.password === password);
+  
+    if (user) {
+      setMessage('Login successful');
+      navigate('/home');
+    } else {
+      setMessage('Invalid username or password');
+    }
+  };
+
+  return (
+    <div className="formPage">
+      <h1>Sign In</h1>
+      {message && <p>{message}</p>}
+      <form onSubmit={handleSubmit} className="formPage">
+        <input
+          className="custom-text-input"
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <input
+          className="custom-text-input"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button className="custom-button1" type="submit">Submit</button>
+      </form>
+    </div>
+  );
+}
+
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -84,28 +125,44 @@ const HamburgerMenu = () => {
   };
 
   return (
-    <Router>
-      <div>
-        <button onClick={toggleMenu} className="hamburger">
-          <RxHamburgerMenu />
-        </button>
-        {isOpen && (
-          <div className="menu">
-            <div><Link to="/">Home</Link></div>
-            <div><Link to="/profile">Profile</Link></div>
-            <div><a href="#">About</a></div>
-            <div><a href="#">Sign In</a></div>
-            <div><a href="#">Log Out</a></div>
-          </div>
-        )}
-      </div>
-      <Routes>
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
-    </Router>
+    <div>
+      <button onClick={toggleMenu} className="hamburger">
+        <RxHamburgerMenu />
+      </button>
+      {isOpen && (
+        <div className="menu">
+          <div><Link to="/home">Home</Link></div>
+          <div><Link to="/profile">Profile</Link></div>
+          <div><a href="#">About</a></div>
+          <div><Link to="/signin">Sign in</Link></div>
+          <div><a href="#">Log Out</a></div>
+        </div>
+      )}
+    </div>
   );
 };
 
+function App() {
+  return (
+    <Router>
+      <div>
+        <HamburgerMenu />
+        <Routes>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/home" element={<StartPage />} />
+          <Route path="*" element={<SignIn />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App
+
+
+/*
 function App() {
     const [currentPage, setCurrentPage] = useState('start');
   
@@ -130,4 +187,5 @@ function App() {
     );
   }
 
-export default App
+
+*/

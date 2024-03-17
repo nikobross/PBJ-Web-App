@@ -6,14 +6,14 @@ import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import users from './users.json';
 
-
 function StartPage() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { username, setUsername, password, setPassword } = useContext(UserContext);
 
   const onStartButtonClick = () => {
-    if (isLoggedIn) { // Add this check
+    if (username) { // Add this check
       navigate('/search');
+      // alert('Search is currently disabled for testing Username: ' + username + ' Password: ' + password);
     } else {
       alert('You must be logged in to search.');
     }
@@ -27,9 +27,23 @@ function StartPage() {
     );
 }
 
-function SearchPage({ onBackButtonClick }) {
+function SearchPage() {
 
     const [data, setData] = useState([{}])
+    const navigate = useNavigate();
+
+    const onBackButtonClick = async () => {
+      try {
+        const response = await fetch('/stop-process', { method: 'POST' });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        navigate('/home');
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+  
     
     useEffect(() => {
         fetch("/search").then(
@@ -69,9 +83,28 @@ function Profile({ onStartButtonClick }) {
   );
 }
 
-function SignIn({ onStartButtonClick }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+function LogOut() {
+  const { username, setUsername, password, setPassword } = useContext(UserContext);
+  const navigate = useNavigate();
+
+  const onClick = () => {
+    // Log out the user
+    setUsername('');
+    setPassword('');
+    navigate('/home');
+
+  };
+
+  return (
+    <div className="page1">
+      <h1>Log Out</h1>
+      <button className="custom-button1" onClick={onClick}>Log Out</button>
+    </div>
+  );
+}
+
+function SignIn() {
+  const { username, setUsername, password, setPassword } = useContext(UserContext);
   const [message, setMessage] = useState('');
 
   const navigate = useNavigate();
@@ -131,31 +164,40 @@ const HamburgerMenu = () => {
       </button>
       {isOpen && (
         <div className="menu">
-          <div><Link to="/home">Home</Link></div>
-          <div><Link to="/profile">Profile</Link></div>
-          <div><a href="#">About</a></div>
-          <div><Link to="/signin">Sign in</Link></div>
-          <div><a href="#">Log Out</a></div>
+          <div><Link className="menu-link" to="/home">Home</Link></div>
+          <div><Link className="menu-link" to="/profile">Profile</Link></div>
+          <div><a className="menu-link" href="#">About</a></div>
+          <div><Link className="menu-link" to="/signin">Sign in</Link></div>
+          <div><a className="menu-link" href="logout">Log Out</a></div>
         </div>
       )}
     </div>
   );
 };
 
+export const UserContext = createContext();
+
 function App() {
+  // Create state variables
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
   return (
-    <Router>
-      <div>
-        <HamburgerMenu />
-        <Routes>
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/home" element={<StartPage />} />
-          <Route path="*" element={<SignIn />} />
-        </Routes>
-      </div>
-    </Router>
+    <UserContext.Provider value={{ username, setUsername, password, setPassword }}>
+      <Router>
+        <div>
+          <HamburgerMenu />
+          <Routes>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/logout" element={<LogOut />} />
+            <Route path="/home" element={<StartPage />} />
+            <Route path="*" element={<SignIn />} />
+          </Routes>
+        </div>
+      </Router>
+    </UserContext.Provider>
   );
 }
 

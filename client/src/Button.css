@@ -42,38 +42,47 @@
     height: 50px; /* Set a fixed height */
     transform: translate(20px, 20px); /* Move the icon to the right by 20px and down by 20px */
 }
-  
-  .menu {
-    background-color: #bd9b75;
-    color: #fff;
-    box-shadow: 0 0 20px rgb(63, 37, 5); /* Add an outline */
-    position: fixed; /* Make the menu fixed */
-    top: 0; /* Position it at the top */
-    left: 0; /* Position it at the right */
-    width: 200px; /* Give it a width */
-    height: 100vh; /* Make it fill the height of the viewport */
-    z-index: 1000; /* Make sure it's above everything else */
-    padding-top: 80px; /* Add some padding to the top */
-    padding-left: 15px;
+
+  .hamburger:hover {
+    background-color: #8343a8;
   }
-  
+
+
+
+.menu {
+  background-color: #bd9b75;
+  color: #fff;
+  box-shadow: 0 0 20px rgb(63, 37, 5); /* Add an outline */
+  position: fixed; /* Make the menu fixed */
+  top: 0; /* Position it at the top */
+  left: 0; /* Position it at the right */
+  width: 175px; /* Give it a width */
+  height: 92vh; /* Make it fill the height of the viewport */
+  z-index: 1000; /* Make sure it's above everything else */
+  padding-top: 80px; /* Add some padding to the top */
+  padding-left: 15px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
   .menu a {
     display: block;
     padding: 10px;
     color: #fff;
     font-size: 20px;
-  } 
-
-  .custom-text-input {
-    background-color: #a665cb;
-    margin-bottom: 20px; /* Adjust as needed */
-    box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
   }
+
+.custom-text-input {
+  background-color: #a665cb;
+  margin-bottom: 20px; /* Adjust as needed */
+  box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
   
   .custom-text-input:hover {
     background-color: #8343a8;
@@ -86,3 +95,8 @@
   .custom-text-input::placeholder {
     color: #d9d9d9; /* Change to the color you want for the placeholder text */
   }
+
+
+.menu-link:hover {
+  text-decoration: underline;
+}

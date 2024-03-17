@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import sqlite3
 
 def UUIDtoIGN(UUID):
     r = requests.get(f"https://api.ashcon.app/mojang/v2/user/{UUID}")
@@ -56,7 +57,8 @@ def scan_with_keys(APIKeys):
     print('finished scanning')    
     return names_pieces
 
+conn = sqlite3.connect('test.db')
 
-users = scan_with_keys(['bfa1651d-fba7-4a2a-9eae-e0e4a6891fc6'])
+#sers = scan_with_keys(['bfa1651d-fba7-4a2a-9eae-e0e4a6891fc6'])
     
-print({'users': users})
+#print({'users': users})

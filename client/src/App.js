@@ -22,7 +22,7 @@ function StartPage() {
     return (
       <div className="page1">
         <h1>PB&J Exotic Scanner</h1>
-        <button className="custom-button1" onClick={onStartButtonClick}>Search</button>
+        <button className="custom-button1" onClick={onStartButtonClick}>Proceed to Scanner</button>
       </div>
     );
 }
@@ -30,7 +30,35 @@ function StartPage() {
 function SearchPage() {
 
     const [data, setData] = useState([{}])
+    const [isLoading, setIsLoading] = useState(false)
     const navigate = useNavigate();
+
+    const onSearchButtonClick = () => {
+      setIsLoading(true);
+      fetch("/search").then(
+          res => {
+              if (!res.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              // Check if the response is empty
+              if (res.headers.get('content-length') === '0' || res.status === 204) {
+                  return {};
+              }
+              return res.json();
+          }
+      ).then(
+          data => {
+              setData(data);
+              console.log(data);
+              setIsLoading(false);
+          }
+      ).catch(
+          error => {
+            console.error('(server is probably down) Error:', error)
+            setIsLoading(false);
+          }
+      );
+  };
 
     const onBackButtonClick = async () => {
       try {
@@ -44,23 +72,15 @@ function SearchPage() {
       }
     };
   
-    
-    useEffect(() => {
-        fetch("/search").then(
-            res => res.json()
-        ).then(
-            data => {
-                setData(data)
-                console.log(data)
-            }
-        )
-    }, [])
+
 
     return (
         <div className="page2">
+
+        
             
           {typeof data.users === 'undefined' ? (
-              <p>Scanning...</p>
+              <p></p>
           ) : data.users.length === 0 ? (
               <p>No users found</p>
           ) : (
@@ -68,6 +88,9 @@ function SearchPage() {
                   <p key={i}>{user}</p>
               ))
           )}
+
+        <button className="custom-button1" onClick={onSearchButtonClick}>{isLoading ? 'Searching...' : 'Search'}</button>
+          
 
         <button className="custom-button1" onClick={onBackButtonClick}>Back to Start</button>
         </div>

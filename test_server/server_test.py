@@ -1,6 +1,5 @@
 import requests
 import pandas as pd
-import sqlite3
 import time
 
 def UUIDtoIGN(UUID):
@@ -29,11 +28,11 @@ def scan_with_keys(APIKeys, start_index):
     names_pieces = []
 
     df = pd.read_csv("NewExoticData.txt", sep=" ", header=None, names=["Hex", "Piece", "uuid"])
+    total_rows = df.shape[0]
 
-
-    StartIndex = start_index
-
-    for index, id in enumerate(df['uuid'][StartIndex:]):
+    index = start_index
+    while True:
+        id = df['uuid'][index]
         
         PlayerData = FindPlayerStatusWithUUID(id, APIKeyUsed)
         
@@ -45,24 +44,27 @@ def scan_with_keys(APIKeys, start_index):
             
             APIKeyUsed = APIKeys[KeysUsed]
             PlayerData = FindPlayerStatusWithUUID(id, APIKeyUsed)
+            
         
         if PlayerData['session']['online']:
             name = UUIDtoIGN(id)
-            text = f"\nPlayer {name} is online and has {df['Piece'][index + StartIndex + 1]} with hex {df['Hex'][index + StartIndex + 1]} @everyone"
+            text = f"\nPlayer {name} is online and has {df['Piece'][index]} with hex {df['Hex'][index]} @everyone"
             print(text)
             names_pieces.append(name)
 
         else:
-            print(index + StartIndex + 1, end = ' ')
-    
+            print(index, end = ' ')
+
+        index += 1
+        if index == total_rows:
+            index = 0
+            
     print('finished scanning')    
-    return (names_pieces, index + StartIndex + 1)
+    return (names_pieces, index)
 
-#conn = sqlite3.connect('test.db')
 
-#sers = scan_with_keys(['bfa1651d-fba7-4a2a-9eae-e0e4a6891fc6'])
-    
-#print({'users': users})
+
+
 
 def check_valid_key(APIKey):
     
@@ -80,7 +82,7 @@ keys = ['b9ef7f08-0ac2-49b1-ba0c-6f2250ae4614']
 
 people_found = []
 
-start_index = 0
+start_index = 58320
 
 for i in range(1, 100):
     
@@ -89,6 +91,7 @@ for i in range(1, 100):
     end_index = data[1]
     
     people_found.append(people)
+
     
     print(people_found)
     
@@ -99,8 +102,4 @@ for i in range(1, 100):
             break
         else:
             time.sleep(30)
-    
-    
-    
-    
     

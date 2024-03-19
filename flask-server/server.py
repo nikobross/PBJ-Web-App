@@ -1,10 +1,12 @@
-from flask import Flask
+from flask import Flask, request
 import requests
 import pandas as pd
+import duckdb
 
 app = Flask(__name__)
 
 should_stop = False
+
 
 def UUIDtoIGN(UUID):
     r = requests.get(f"https://api.ashcon.app/mojang/v2/user/{UUID}")
@@ -75,6 +77,7 @@ def scan_with_keys(APIKeys):
     return names_pieces
 
 
+
 @app.route("/search")
 def search():
     print('search queried')
@@ -87,6 +90,36 @@ def stop_process():
     global should_stop
     should_stop = True  # Set the stop flag when this endpoint is hit
     return {'message': 'Process will be stopped'}
+
+@app.route('/login', methods=['POST'])
+def login():
+    con = duckdb.connect('PBJ.duckdb')
+
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        username VARCHAR,
+        password VARCHAR
+    )
+    """)
+    
+    con.sql("SELECT * FROM users").show()
+    
+    username = request.form.get('username')
+    password = request.form.get('password')  
+    
+    print(username, password)
+
+    result = con.execute("""
+    SELECT COUNT(*) 
+    FROM users 
+    WHERE username = ? AND password = ?
+    """, (username, password)).fetchone()
+
+    if result[0] > 0:
+        return "Login successful", 200
+    else:
+        return "Invalid username or password", 401
+
 
 
 

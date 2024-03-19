@@ -132,13 +132,21 @@ function SignIn() {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-  
-    // Check if there is a user with the entered username and password
-    const user = users.find(user => user.username === username && user.password === password);
-  
-    if (user) {
+
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        username: username,
+        password: password,
+      }),
+    });
+
+    if (response.ok) {
       setMessage('Login successful');
       navigate('/home');
     } else {

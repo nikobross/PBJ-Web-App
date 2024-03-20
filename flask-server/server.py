@@ -94,13 +94,6 @@ def stop_process():
 @app.route('/login', methods=['POST'])
 def login():
     con = duckdb.connect('PBJ.duckdb')
-
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        username VARCHAR,
-        password VARCHAR
-    )
-    """)
     
     con.sql("SELECT * FROM users").show()
     
@@ -120,7 +113,34 @@ def login():
     else:
         return "Invalid username or password", 401
 
+@app.route('/add-keys', methods=['POST'])
+def add_keys():
+    con = duckdb.connect('PBJ.duckdb')
+    
+    keys = request.json.get('keys', [])
+    username = request.json.get('username')
+    
+    if not keys or len(keys) > 5:
+        return {'message': 'You must provide up to 5 API keys.'}, 400
 
+    # Pad keys array with None values if less than 5 keys were provided
+    keys += [None] * (5 - len(keys))
+
+    # Unpack keys into separate variables
+    key1, key2, key3, key4, key5 = keys
+    
+    print(keys, username)
+
+    # Update keys in users table for the specified user
+    con.execute("""
+        UPDATE users
+        SET API_KEY1 = ?, API_KEY2 = ?, API_KEY3 = ?, API_KEY4 = ?, API_KEY5 = ?
+        WHERE username = ?
+    """, (key1, key2, key3, key4, key5, username))
+
+    con.sql("SELECT * FROM users").show()
+    
+    return {'message': 'API keys updated successfully.'}, 200
 
 
 if __name__ == "__main__":

@@ -4,7 +4,6 @@ import './Button.css';
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import users from './users.json';
 
 function StartPage() {
   const navigate = useNavigate();
@@ -97,11 +96,61 @@ function SearchPage() {
     )
 }
 
-function Profile({ onStartButtonClick }) {
+function Profile() {
+  const [formState, setFormState] = useState({
+    input1: '',
+    input2: '',
+    input3: '',
+    input4: '',
+    input5: '',
+  });
+
+  const { username, setUsername, password, setPassword } = useContext(UserContext);
+
+  const handleInputChange = (event) => {
+    setFormState({
+      ...formState,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Convert form state to array of keys
+    const keys = Object.values(formState);
+
+    // Send keys and username to backend
+    const response = await fetch('/add-keys', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ keys, username }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to add keys');
+      return;
+    }
+
+    const data = await response.json();
+    console.log(data.message);
+  };
+
   return (
     <div className="page1">
-      <h1>Profile</h1>
-      <button className="custom-button1" onClick={onStartButtonClick}>Set Profile</button>
+      <h1>API Keys</h1>
+      <form onSubmit={handleSubmit}>
+        <input className="custom-text-input2" type="text" name="input1" value={formState.input1} onChange={handleInputChange} />
+        <input className="custom-text-input2" type="text" name="input2" value={formState.input2} onChange={handleInputChange} />
+        <input className="custom-text-input2" type="text" name="input3" value={formState.input3} onChange={handleInputChange} />
+        <input className="custom-text-input2" type="text" name="input4" value={formState.input4} onChange={handleInputChange} />
+        <input className="custom-text-input2" type="text" name="input5" value={formState.input5} onChange={handleInputChange} />
+    <div className="button-container">
+        <button type="submit" className="custom-button1">Update Keys</button>
+    </div>
+      </form>
     </div>
   );
 }

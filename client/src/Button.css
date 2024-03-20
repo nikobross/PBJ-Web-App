@@ -83,6 +83,7 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  margin-left: 10px;
 }
   
   .custom-text-input:hover {
@@ -98,6 +99,44 @@
   }
 
 
+  .custom-text-input2 {
+    background-color: #a665cb;
+    margin-bottom: 20px; /* Adjust as needed */
+    box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    width: 200px;
+  }
+    
+    .custom-text-input2:hover {
+      background-color: #8343a8;
+    }
+  
+    .custom-text-input2:focus {
+      background-color: #712f97; /* Change to the color you want when the input is focused */
+    }
+  
+    .custom-text-input2::placeholder {
+      color: #d9d9d9; /* Change to the color you want for the placeholder text */
+    }
+
+
 .menu-link:hover {
   text-decoration: underline;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px; /* adjust as needed */
 }

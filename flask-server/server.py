@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, jsonify, request
 import requests
 import pandas as pd
 import duckdb
@@ -141,6 +141,24 @@ def add_keys():
     con.sql("SELECT * FROM users").show()
     
     return {'message': 'API keys updated successfully.'}, 200
+
+@app.route('/get-keys', methods=['GET'])
+def get_keys():
+    
+    con = duckdb.connect('PBJ.duckdb')
+    
+    username = request.args.get('username')
+    result = con.execute("""
+        SELECT API_Key1, API_Key2, API_Key3, API_Key4, API_Key5
+        FROM users
+        WHERE username = ?
+    """, (username,)).fetchone()
+
+    if result is None:
+        return jsonify({'message': 'User not found.'}), 404
+
+    keys = [key for key in result if key is not None]
+    return jsonify({'keys': keys}), 200
 
 
 if __name__ == "__main__":

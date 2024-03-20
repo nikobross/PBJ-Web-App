@@ -107,6 +107,29 @@ function Profile() {
 
   const { username, setUsername, password, setPassword } = useContext(UserContext);
 
+  useEffect(() => {
+    const fetchKeys = async () => {
+      if (!username) {
+        console.log('User is not signed in.');
+        return;
+      }
+
+      const response = await fetch(`/get-keys?username=${username}`);
+      const data = await response.json();
+      setFormState({
+        input1: data.keys[0] || '',
+        input2: data.keys[1] || '',
+        input3: data.keys[2] || '',
+        input4: data.keys[3] || '',
+        input5: data.keys[4] || '',
+      });
+
+      console.log(data.keys);
+    };
+
+    fetchKeys();
+  }, [username]);
+
   const handleInputChange = (event) => {
     setFormState({
       ...formState,

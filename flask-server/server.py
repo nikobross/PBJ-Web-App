@@ -27,7 +27,7 @@ def FindPlayerStatusWithUUID(uuid, APIKey):
     
     return redq
 
-def scan_with_keys(APIKeys):
+def scan_with_keys(APIKeys, start_index):
 
     global should_stop
 
@@ -38,7 +38,7 @@ def scan_with_keys(APIKeys):
     df = pd.read_csv("NewExoticData.txt", sep=" ", header=None, names=["Hex", "Piece", "uuid"])
 
 
-    StartIndex = 0
+    StartIndex = start_index
 
     for index, id in enumerate(df['uuid'][StartIndex:]):
         
@@ -80,9 +80,40 @@ def scan_with_keys(APIKeys):
 
 @app.route("/search")
 def search():
+    con = duckdb.connect('PBJ.duckdb')
     print('search queried')
-    users = scan_with_keys(['b9ef7f08-0ac2-49b1-ba0c-6f2250ae4614', '8aa129e5-bc47-4a09-95d7-9c6aac4dbf67'])
+    username = request.args.get('username')
+    print(username)
+
+    result = con.execute("""
+        SELECT End_Index
+        FROM users
+        WHERE username = ?
+    """, (username,)).fetchone()
     
+    APIKeys = con.execute("""
+        SELECT API_Key1, API_Key2, API_Key3, API_Key4, API_Key5
+        FROM users
+        WHERE username = ?
+    """, (username,)).fetchone()
+    
+    if APIKeys is not None:
+        filtered_APIKeys = [obj for obj in APIKeys if obj]
+    else:
+        filtered_APIKeys = []
+        print('Not signed in probably')
+        
+        print(filtered_APIKeys)
+
+    if result is None:
+        return jsonify({'message': 'User not found.'}), 404
+
+    end_index = result[0]
+    print(end_index)
+
+    users = ['placeholder']
+    #users = scan_with_keys(filtered_APIKeys, end_index)
+
     return {'users': users}
 
 @app.route("/stop-process", methods=['POST'])

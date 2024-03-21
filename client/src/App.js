@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react'
+import React, { useState, useEffect, createContext, useContext, useRef } from 'react'
 import './App.css';
 import './Button.css';
 import { RxHamburgerMenu } from "react-icons/rx";
@@ -32,35 +32,51 @@ function SearchPage() {
     const [isLoading, setIsLoading] = useState(false)
     const navigate = useNavigate();
 
+    const shouldContinueFetching = useRef(true);
+
+    const { username, setUsername, password, setPassword } = useContext(UserContext);
+
     const onSearchButtonClick = () => {
       setIsLoading(true);
-      fetch("/search").then(
+      shouldContinueFetching.current = true;
+      const fetchData = () => {
+        fetch(`/search?username=${username}`).then(
           res => {
-              if (!res.ok) {
-                  throw new Error('Network response was not ok');
-              }
-              // Check if the response is empty
-              if (res.headers.get('content-length') === '0' || res.status === 204) {
-                  return {};
-              }
-              return res.json();
+            if (!res.ok) {
+              throw new Error('Network response was not ok');
+            }
+            // Check if the response is empty
+            if (res.headers.get('content-length') === '0' || res.status === 204) {
+              return {};
+            }
+            return res.json();
           }
-      ).then(
+        ).then(
           data => {
-              setData(data);
-              console.log(data);
-              setIsLoading(false);
+            setData(prevData => ({
+              users: [...(prevData.users || []), ...data.users]
+          }));
+            console.log(data);
+            setIsLoading(false);
+            // Call fetchData again to fetch the next set of data
+            if (shouldContinueFetching.current){
+              setTimeout(fetchData, 6000);
+            }
           }
-      ).catch(
+        ).catch(
           error => {
             console.error('(server is probably down) Error:', error)
             setIsLoading(false);
           }
-      );
-  };
+        );
+      };
+      fetchData();
+    };
 
     const onBackButtonClick = async () => {
       try {
+        shouldContinueFetching.current = false;
+        console.log('Stopping process');
         const response = await fetch('/stop-process', { method: 'POST' });
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -72,15 +88,11 @@ function SearchPage() {
     };
   
 
-
     return (
-        <div className="page2">
-
-        
-            
-          {typeof data.users === 'undefined' ? (
-              <p></p>
-          ) : data.users.length === 0 ? (
+      <div className="page2">
+          {isLoading ? (
+              <p>Loading...</p>
+          ) : (!data.users || data.users.length === 0) ? (
               <p>No users found</p>
           ) : (
               data.users.map((user, i) => (
@@ -88,12 +100,15 @@ function SearchPage() {
               ))
           )}
 
-        <button className="custom-button1" onClick={onSearchButtonClick}>{isLoading ? 'Searching...' : 'Search'}</button>
-          
+          <button className="custom-button1" onClick={onSearchButtonClick}>
+              {isLoading ? 'Searching...' : 'Search'}
+          </button>
 
-        <button className="custom-button1" onClick={onBackButtonClick}>Back to Start</button>
-        </div>
-    )
+          <button className="custom-button1" onClick={onBackButtonClick}>
+              Back to Start
+          </button>
+      </div>
+  )
 }
 
 function Profile() {

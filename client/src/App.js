@@ -320,32 +320,3 @@ function App() {
 }
 
 export default App
-
-
-/*
-function App() {
-    const [currentPage, setCurrentPage] = useState('start');
-  
-    const handleStartButtonClick = () => {
-      setCurrentPage('search');
-    };
-  
-    const handleBackButtonClick = () => {
-      setCurrentPage('start');
-    };
-  
-    return (
-      <div>
-        <HamburgerMenu />
-        {currentPage === 'start' && (
-          <StartPage onStartButtonClick={handleStartButtonClick} />
-        )}
-        {currentPage === 'search' && (
-          <SearchPage onBackButtonClick={handleBackButtonClick} />
-        )}
-      </div>
-    );
-  }
-
-
-*/

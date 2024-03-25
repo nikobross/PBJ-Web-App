@@ -120,6 +120,14 @@ function Profile() {
     input5: '',
   });
 
+  const [inputColors, setInputColors] = useState({
+    input1: 'black',
+    input2: 'black',
+    input3: 'black',
+    input4: 'black',
+    input5: 'black',
+});
+
   const { username, setUsername, password, setPassword } = useContext(UserContext);
 
   useEffect(() => {
@@ -139,11 +147,41 @@ function Profile() {
         input5: data.keys[4] || '',
       });
 
+
+
       console.log(data.keys);
     };
 
     fetchKeys();
   }, [username]);
+
+  useEffect(() => {
+    const checkKeys = async () => {
+        for (const [inputName, keyValue] of Object.entries(formState)) {
+            const response = await fetch(`/check-keys?key=${keyValue}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ keys: [keyValue], username }),
+            });
+
+            if (!response.ok) {
+                console.error('Failed to check keys');
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data)
+            setInputColors(prevColors => ({
+                ...prevColors,
+                [inputName]: data.isValid ? 'green' : 'red',
+            }));
+        }
+    };
+
+    checkKeys();
+}, [formState, username]);
 
   const handleInputChange = (event) => {
     setFormState({
@@ -154,6 +192,8 @@ function Profile() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+
 
     // Convert form state to array of keys
     const keys = Object.values(formState);
@@ -180,11 +220,11 @@ function Profile() {
     <div className="page1">
       <h1>API Keys</h1>
       <form onSubmit={handleSubmit}>
-        <input className="custom-text-input2" type="text" name="input1" value={formState.input1} onChange={handleInputChange} />
-        <input className="custom-text-input2" type="text" name="input2" value={formState.input2} onChange={handleInputChange} />
-        <input className="custom-text-input2" type="text" name="input3" value={formState.input3} onChange={handleInputChange} />
-        <input className="custom-text-input2" type="text" name="input4" value={formState.input4} onChange={handleInputChange} />
-        <input className="custom-text-input2" type="text" name="input5" value={formState.input5} onChange={handleInputChange} />
+          <input className="custom-text-input2" type="text" name="input1" value={formState.input1} onChange={handleInputChange} style={{ color: inputColors.input1 }} />
+          <input className="custom-text-input2" type="text" name="input2" value={formState.input2} onChange={handleInputChange} style={{ color: inputColors.input2 }} />
+          <input className="custom-text-input2" type="text" name="input3" value={formState.input3} onChange={handleInputChange} style={{ color: inputColors.input3 }} />
+          <input className="custom-text-input2" type="text" name="input4" value={formState.input4} onChange={handleInputChange} style={{ color: inputColors.input4 }} />
+          <input className="custom-text-input2" type="text" name="input5" value={formState.input5} onChange={handleInputChange} style={{ color: inputColors.input5 }} />
     <div className="button-container">
         <button type="submit" className="custom-button1">Update Keys</button>
     </div>

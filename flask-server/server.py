@@ -191,6 +191,18 @@ def get_keys():
     keys = [key for key in result if key is not None]
     return jsonify({'keys': keys}), 200
 
+@app.route('/check-keys', methods=['POST'])
+def check_if_key_valid():
+    key = request.args.get('key')
+    print(key)
+    req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
+    ans = req.json()['success']
+    print(ans)
+    if not ans:
+        return jsonify({"isValid": False, "message": "The key is not valid."}), 200
+    return jsonify({"isValid": True, "message": "The key is valid."}), 200
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

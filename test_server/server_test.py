@@ -78,28 +78,35 @@ def check_valid_key(APIKey):
     
     return True
 
-keys = ['4a4f9aa5-800d-4ee1-a61f-f9133ba5259e']
 
-people_found = []
+def run():
+    keys = ['4a4f9aa5-800d-4ee1-a61f-f9133ba5259e']
 
-start_index = 58320
+    people_found = []
 
-for i in range(1, 100):
-    
-    data = scan_with_keys(keys, start_index)
-    people = data[0]
-    end_index = data[1]
-    
-    people_found.append(people)
+    start_index = 58320
 
-    
-    print(people_found)
-    
-    while True:
-        if check_valid_key(keys[0]):
-            print('Key is valid')
-            start_index = end_index
-            break
-        else:
-            time.sleep(30)
-    
+    for i in range(1, 100):
+        
+        data = scan_with_keys(keys, start_index)
+        people = data[0]
+        end_index = data[1]
+        
+        people_found.append(people)
+
+        
+        print(people_found)
+        
+        while True:
+            if check_valid_key(keys[0]):
+                print('Key is valid')
+                start_index = end_index
+                break
+            else:
+                time.sleep(30)
+        
+def check_if_key_valid(key):
+    req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
+    return req.json()['success']
+
+print(check_if_key_valid('d6ed2284-f8f0-41c2-9ead-59b1a577ff3e'))

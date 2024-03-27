@@ -13,6 +13,22 @@
     background-color: #712f97;
   }
 
+.more-info-button {
+    background-color: #a665cb;
+    box-shadow: 0 0 10px rgb(63, 37, 5); /* Add an outline */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 20px;
+  }
+  
+  .more-info-button:hover {
+    background-color: #712f97;
+  }
+
+  
 .custom-button2 {
     background-color: #ff69b4;
     color: #fff;
@@ -108,7 +124,7 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin-left: 10px;
+    margin-left: 20px;
     width: 200px;
   }
     
@@ -137,6 +153,9 @@
 
 .button-container {
   display: flex;
-  justify-content: center;
-  margin-top: 20px; /* adjust as needed */
+  justify-content: space-between;
+  align-items: center;
+   /* margin-top: 20px; /* adjust as needed */
+  font-size: large;
+  padding-bottom: 20px;
 }

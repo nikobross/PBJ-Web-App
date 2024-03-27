@@ -216,9 +216,19 @@ function Profile() {
     console.log(data.message);
   };
 
+  const handleMoreInfo = async (event) => {
+    event.preventDefault();
+    console.log('Keys may display as invalid if your internet block Hypixel.api');
+    alert('Keys may display as invalid if your internet block Hypixel.api');
+  }
+
   return (
     <div className="page1">
       <h1>API Keys</h1>
+      <div className="button-container">
+        <p>Red keys are invalid, you may need to go to your developer dashboard and regenerate the key</p> 
+        <button className="more-info-button" onClick={handleMoreInfo}>i</button>
+      </div>
       <form onSubmit={handleSubmit}>
           <input className="custom-text-input2" type="text" name="input1" value={formState.input1} onChange={handleInputChange} style={{ color: inputColors.input1 }} />
           <input className="custom-text-input2" type="text" name="input2" value={formState.input2} onChange={handleInputChange} style={{ color: inputColors.input2 }} />

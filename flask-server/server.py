@@ -76,6 +76,16 @@ def scan_with_keys(APIKeys, start_index):
     print(names_pieces)    
     return names_pieces
 
+def check_if_keys_are_valid_python(APIKeys):
+    filtered_keys = []
+    for key in APIKeys:
+        req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
+        ans = req.json()['success']
+        
+        if ans:
+            filtered_keys.append(key)
+
+    return filtered_keys
 
 
 @app.route("/search")
@@ -104,6 +114,8 @@ def search():
         print('Not signed in probably')
         
         print(filtered_APIKeys)
+        
+    filtered_APIKeys = check_if_keys_are_valid_python(filtered_APIKeys)
 
     if result is None:
         return jsonify({'message': 'User not found.'}), 404
@@ -195,7 +207,13 @@ def get_keys():
 def check_if_key_valid():
     key = request.args.get('key')
     print(key)
-    req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
+    try:
+        req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
+        #req.raise_for_status()  # Raises a HTTPError if the status is 4xx, 5xx
+    except Exception as e:
+        # handle error
+        # print(f"An error occurred: {e}")
+        return jsonify({"isValid": False, "message": "Hypixel API is not accesible (probably connected to an internet that blocks Hypixel)."}), 200
     ans = req.json()['success']
     print(ans)
     if not ans:

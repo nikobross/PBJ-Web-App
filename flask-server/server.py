@@ -1,226 +1,216 @@
 from flask import Flask, jsonify, request
-import requests
-import pandas as pd
-import duckdb
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+import random
+from difflib import SequenceMatcher
+from datetime import datetime
+
 
 app = Flask(__name__)
 
-should_stop = False
+# Set up the Spotify API credentials
+client_id = 'b822bfa6e75b4eb1a785ccf4d7af747f'
+client_secret = '024d2f67a3bc41518d60e5f0e8dc096a'
+redirect_uri = 'http://localhost:8888/callback'
+scopes = "user-read-playback-state,user-modify-playback-state,streaming"
+current_track = None
+current_artist = None
+players = []
+game_code = None
+new_song_playing = False
+times_run = 0
+access_count = 0
+song_start_time = None
 
 
-def UUIDtoIGN(UUID):
-    r = requests.get(f"https://api.ashcon.app/mojang/v2/user/{UUID}")
-    rdata = r.json()
-    
+
+# Create a Spotify API client
+# Create a Spotify API client with the necessary scopes
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
+                                               client_secret=client_secret,
+                                               redirect_uri=redirect_uri,
+                                               scope=scopes))
+
+# Get the playlist ID
+playlist_id = '4g53onSOsSmpakrqL9tXMd'
+
+# Initialize an empty list to store all tracks
+all_tracks = []
+
+def fetch_playlist_tracks():
+    global all_tracks
     try:
-        name = rdata["username"]
-    except Exception as e:
-        return 'Invalid UUID / Name Search Error'
-    
-    return name
+        # Initial call to fetch the first set of tracks
+        results = sp.playlist_tracks(playlist_id)
+        all_tracks.extend(results['items'])
 
-def FindPlayerStatusWithUUID(uuid, APIKey):
+        # Continue fetching tracks until all have been retrieved
+        while results['next']:
+            results = sp.playlist_tracks(playlist_id, offset=len(all_tracks))
+            all_tracks.extend(results['items'])
+    except spotipy.exceptions.SpotifyException as e:
+        print(f"Spotify API error: {e}")
+        # Handle error (e.g., attempt to refresh token, log error, etc.)
 
-    # requests
-    req = requests.get(f"https://api.hypixel.net/status?key={APIKey}&uuid={uuid}")
-    redq = req.json()
-    
-    return redq
+fetch_playlist_tracks()
 
-def scan_with_keys(APIKeys, start_index):
+@app.route('/play')
+def play():
+    random_track = random.choice(all_tracks)
+    track_name = random_track['track']['name']
+    track_uri = random_track['track']['uri']
 
-    global should_stop
+    global current_track, current_artist, song_start_time
 
-    APIKeyUsed = APIKeys[0]
-    KeysUsed = 0
-    names_pieces = []
+    song_start_time = datetime.now()
+    current_track = track_name
+    current_artist = random_track['track']['artists'][0]['name']
 
-    df = pd.read_csv("NewExoticData.txt", sep=" ", header=None, names=["Hex", "Piece", "uuid"])
+    print(track_name, current_artist)
+    sp.start_playback(uris=[track_uri])
 
+    return f"Now playing: {current_artist} - {current_track}"
 
-    StartIndex = start_index
+@app.route('/check_guess', methods=['POST'])
+def check_guess():
+    data = request.get_json()
+    guess_artist_for_display = data['artist']
+    guess_song_for_display = data['song']
+    guess_artist = data['artist'].lower()
+    guess_song = data['song'].lower()
+    username = data['username']
 
-    for index, id in enumerate(df['uuid'][StartIndex:]):
-        
-        
-        
-        PlayerData = FindPlayerStatusWithUUID(id, APIKeyUsed)
-        
-        if PlayerData['success'] == False:
-            KeysUsed += 1
-           
-            if KeysUsed == len(APIKeys):
-                break
-              
-            APIKeyUsed = APIKeys[KeysUsed]
-            PlayerData = FindPlayerStatusWithUUID(id, APIKeyUsed)
-            
-        if should_stop:
-            print('Stopping process')
-            should_stop = False  # Reset the stop flag
-            break
-        
-        try:
-            if PlayerData['session']['online']:
-                name = UUIDtoIGN(id)
-                text = f"\nPlayer {name} is online and has {df['Piece'][index + StartIndex + 1]} with hex {df['Hex'][index + StartIndex + 1]} @everyone"
-                print(text)
-                names_pieces.append(name)
-        except KeyError:
-            print('Finished scanning due to key error')
+    for player in players:
+        if player['name'] == username:
+            player['current_track_guess'] = guess_song_for_display
+            player['current_artist_guess'] = guess_artist_for_display
 
+    lower_artist = current_artist.lower()
+    lower_song = current_track.split(' (')[0].lower()
+
+    global song_start_time
+    guess_time = datetime.now()  # Time of the guess
+    time_taken = (guess_time - song_start_time).total_seconds()  # Time taken in seconds
+
+    print(time_taken)
+
+    # Define a similarity threshold
+    similarity_threshold = 0.8  # 80% similarity
+
+    # Function to calculate similarity
+    def similarity(a, b):
+        return SequenceMatcher(None, a, b).ratio()
+
+    # Calculate similarities
+    artist_similarity = similarity(guess_artist, lower_artist)
+    song_similarity = similarity(guess_song, lower_song)
+
+    # Check if either artist or song guesses meet the similarity threshold
+    artist_correct = artist_similarity >= similarity_threshold
+    song_correct = song_similarity >= similarity_threshold
+    # Example scoring adjustment based on time taken
+    base_points = 1000  # Base points for a correct guess
+    time_penalty = max(0, (time_taken - 10) * 10)  # Example penalty calculation
+
+    # Adjust points based on time taken
+    points_awarded = max(0, base_points - int(time_penalty))  # Ensure only integers are added
+
+    if artist_correct and song_correct:
+        # Increase the player's score based on time taken
+        for player in players:
+            if player['name'] == username:
+                player['score'] += points_awarded
+        return 'Correct guess!'
+    elif artist_correct or song_correct:
+        # Increase the player's score by half of the points for partially correct guess
+        for player in players:
+            if player['name'] == username:
+                player['score'] += points_awarded // 2
+        if artist_correct:
+            return 'Artist correct!'
         else:
-            print(index, end = ' ')
-    
-    print('finished scanning')
-    print(names_pieces)    
-    return names_pieces
-
-def check_if_keys_are_valid_python(APIKeys):
-    filtered_keys = []
-    for key in APIKeys:
-        req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
-        ans = req.json()['success']
-        
-        if ans:
-            filtered_keys.append(key)
-
-    return filtered_keys
-
-
-@app.route("/search")
-def search():
-    con = duckdb.connect('PBJ.duckdb')
-    print('search queried')
-    username = request.args.get('username')
-    print(username)
-
-    result = con.execute("""
-        SELECT End_Index
-        FROM users
-        WHERE username = ?
-    """, (username,)).fetchone()
-    
-    APIKeys = con.execute("""
-        SELECT API_Key1, API_Key2, API_Key3, API_Key4, API_Key5
-        FROM users
-        WHERE username = ?
-    """, (username,)).fetchone()
-    
-    if APIKeys is not None:
-        filtered_APIKeys = [obj for obj in APIKeys if obj]
+            return 'Title correct!'
     else:
-        filtered_APIKeys = []
-        print('Not signed in probably')
-        
-        print(filtered_APIKeys)
-        
-    filtered_APIKeys = check_if_keys_are_valid_python(filtered_APIKeys)
+        return 'Incorrect guess!'
 
-    if result is None:
-        return jsonify({'message': 'User not found.'}), 404
+@app.route('/players')
+def get_players():
+    print(players)
+    return {'players': players}
 
-    end_index = result[0]
-    print(end_index)
+@app.route('/add_player', methods=['POST'])
+def add_player():
+    data = request.get_json()
+    name = data['name']
+    # Generate a new unique ID
+    new_id = max(player['id'] for player in players) + 1 if players else 1
+    # Append the new player with a score of 0
+    players.append({'id': new_id, 'name': name, 'score': 0, 'current_track_guess': None, 'current_artist_guess': None})
+    print(players)
+    return 'Player added!'
 
-    users = ['placeholder']
-    #users = scan_with_keys(filtered_APIKeys, end_index)
+@app.route('/generate_code')
+def generate_code():
+    global current_track, current_artist, players, game_code, new_song_playing
 
-    return {'users': users}
 
-@app.route("/stop-process", methods=['POST'])
-def stop_process():
-    global should_stop
-    should_stop = True  # Set the stop flag when this endpoint is hit
-    return {'message': 'Process will be stopped'}
+    current_track = None
+    current_artist = None
+    players = []
+    game_code = None
+    new_song_playing = False
 
-@app.route('/login', methods=['POST'])
-def login():
-    con = duckdb.connect('PBJ.duckdb')
-    
-    con.sql("SELECT * FROM users").show()
-    
-    username = request.form.get('username')
-    password = request.form.get('password')  
-    
-    print(username, password)
+    game_code = random.randint(1000, 9999)
+    print(game_code)
+    return {'game_code': game_code}
 
-    result = con.execute("""
-    SELECT COUNT(*) 
-    FROM users 
-    WHERE username = ? AND password = ?
-    """, (username, password)).fetchone()
-
-    if result[0] > 0:
-        return "Login successful", 200
+@app.route('/check_game_code', methods=['GET'])
+def check_game_code():
+    gameCode = request.args.get('code', default=None, type=int)
+    if gameCode is not None and gameCode == game_code:
+        return {'isValidGameCode': True}
     else:
-        return "Invalid username or password", 401
-
-@app.route('/add-keys', methods=['POST'])
-def add_keys():
-    con = duckdb.connect('PBJ.duckdb')
-    
-    keys = request.json.get('keys', [])
-    username = request.json.get('username')
-    
-    if not keys or len(keys) > 5:
-        return {'message': 'You must provide up to 5 API keys.'}, 400
-
-    # Pad keys array with None values if less than 5 keys were provided
-    keys += [None] * (5 - len(keys))
-
-    # Unpack keys into separate variables
-    key1, key2, key3, key4, key5 = keys
-    
-    print(keys, username)
-
-    # Update keys in users table for the specified user
-    con.execute("""
-        UPDATE users
-        SET API_KEY1 = ?, API_KEY2 = ?, API_KEY3 = ?, API_KEY4 = ?, API_KEY5 = ?
-        WHERE username = ?
-    """, (key1, key2, key3, key4, key5, username))
-
-    con.sql("SELECT * FROM users").show()
-    
-    return {'message': 'API keys updated successfully.'}, 200
-
-@app.route('/get-keys', methods=['GET'])
-def get_keys():
-    
-    con = duckdb.connect('PBJ.duckdb')
-    
-    username = request.args.get('username')
-    result = con.execute("""
-        SELECT API_Key1, API_Key2, API_Key3, API_Key4, API_Key5
-        FROM users
-        WHERE username = ?
-    """, (username,)).fetchone()
-
-    if result is None:
-        return jsonify({'message': 'User not found.'}), 404
-
-    keys = [key for key in result if key is not None]
-    return jsonify({'keys': keys}), 200
-
-@app.route('/check-keys', methods=['POST'])
-def check_if_key_valid():
-    key = request.args.get('key')
-    print(key)
-    try:
-        req = requests.get(f"https://api.hypixel.net/status?key={key}&uuid=dee0003700fb4329878119ed84f943f7")
-        #req.raise_for_status()  # Raises a HTTPError if the status is 4xx, 5xx
-    except Exception as e:
-        # handle error
-        # print(f"An error occurred: {e}")
-        return jsonify({"isValid": False, "message": "Hypixel API is not accesible (probably connected to an internet that blocks Hypixel)."}), 200
-    ans = req.json()['success']
-    print(ans)
-    if not ans:
-        return jsonify({"isValid": False, "message": "The key is not valid."}), 200
-    return jsonify({"isValid": True, "message": "The key is valid."}), 200
+        return {'isValidGameCode': False}
 
 
+@app.route('/nextpage')
+def next_page():
+    global new_song_playing, players, access_count
+    connected_players = len(players)
+    print(connected_players)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    if new_song_playing:
+        # Increment the access count
+        access_count += 1
+        
+        # Check if all connected players have accessed the endpoint
+        if access_count >= connected_players:
+            new_song_playing = False
+            # Reset the counter for the next song
+            access_count = 0
+            return jsonify({'isPlaying': True})
+        else:
+            return jsonify({'isPlaying': True})
+    return jsonify({'isPlaying': False})
+
+@app.route('/setnextpage')
+def set_next_page():
+    global new_song_playing
+    new_song_playing = True
+    return 'Next page playing status set!'
+
+@app.route('/answers')
+def get_answers():
+    global current_track, current_artist
+    return {'song': current_track, 'artist': current_artist}
+
+@app.route('/reset_guesses')
+def reset_guesses():
+    for player in players:
+        player['current_track_guess'] = None
+        player['current_artist_guess'] = None
+    return 'Guesses reset!'
+
+
+if __name__ == '__main__':
+    app.run()

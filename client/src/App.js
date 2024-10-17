@@ -1,319 +1,500 @@
-import React, { useState, useEffect, createContext, useContext, useRef } from 'react'
+import React, { useState, useEffect, createContext, useContext } from 'react'
 import './App.css';
 import './Button.css';
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
-function StartPage() {
-  const navigate = useNavigate();
-  const { username, setUsername, password, setPassword } = useContext(UserContext);
-
-  const onStartButtonClick = () => {
-    if (username) { // Add this check
-      navigate('/search');
-      // alert('Search is currently disabled for testing Username: ' + username + ' Password: ' + password);
-    } else {
-      alert('You must be logged in to search.');
-    }
-  };
-
-    return (
-      <div className="page1">
-        <h1>PB&J Exotic Scanner</h1>
-        <button className="custom-button1" onClick={onStartButtonClick}>Proceed to Scanner</button>
-      </div>
-    );
-}
-
-function SearchPage() {
-
-    const [data, setData] = useState([{}])
-    const [isLoading, setIsLoading] = useState(false)
-    const navigate = useNavigate();
-
-    const shouldContinueFetching = useRef(true);
-
-    const { username, setUsername, password, setPassword } = useContext(UserContext);
-
-    const onSearchButtonClick = () => {
-      setIsLoading(true);
-      shouldContinueFetching.current = true;
-      const fetchData = () => {
-        fetch(`/search?username=${username}`).then(
-          res => {
-            if (!res.ok) {
-              throw new Error('Network response was not ok');
-            }
-            // Check if the response is empty
-            if (res.headers.get('content-length') === '0' || res.status === 204) {
-              return {};
-            }
-            return res.json();
-          }
-        ).then(
-          data => {
-            setData(prevData => ({
-              users: [...(prevData.users || []), ...data.users]
-          }));
-            console.log(data);
-            setIsLoading(false);
-            // Call fetchData again to fetch the next set of data
-            if (shouldContinueFetching.current){
-              setTimeout(fetchData, 6000);
-            }
-          }
-        ).catch(
-          error => {
-            console.error('(server is probably down) Error:', error)
-            setIsLoading(false);
-          }
-        );
-      };
-      fetchData();
-    };
-
-    const onBackButtonClick = async () => {
-      try {
-        shouldContinueFetching.current = false;
-        console.log('Stopping process');
-        const response = await fetch('/stop-process', { method: 'POST' });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        navigate('/home');
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-  
-
-    return (
-      <div className="page2">
-          {isLoading ? (
-              <p>Loading...</p>
-          ) : (!data.users || data.users.length === 0) ? (
-              <p>No users found</p>
-          ) : (
-              data.users.map((user, i) => (
-                  <p key={i}>{user}</p>
-              ))
-          )}
-
-          <button className="custom-button1" onClick={onSearchButtonClick}>
-              {isLoading ? 'Searching...' : 'Search'}
-          </button>
-
-          <button className="custom-button1" onClick={onBackButtonClick}>
-              Back to Start
-          </button>
-      </div>
-  )
-}
-
-function Profile() {
-  const [formState, setFormState] = useState({
-    input1: '',
-    input2: '',
-    input3: '',
-    input4: '',
-    input5: '',
-  });
-
-  const [inputColors, setInputColors] = useState({
-    input1: 'black',
-    input2: 'black',
-    input3: 'black',
-    input4: 'black',
-    input5: 'black',
-});
-
-  const { username, setUsername, password, setPassword } = useContext(UserContext);
-
-  useEffect(() => {
-    const fetchKeys = async () => {
-      if (!username) {
-        console.log('User is not signed in.');
-        return;
-      }
-
-      const response = await fetch(`/get-keys?username=${username}`);
-      const data = await response.json();
-      setFormState({
-        input1: data.keys[0] || '',
-        input2: data.keys[1] || '',
-        input3: data.keys[2] || '',
-        input4: data.keys[3] || '',
-        input5: data.keys[4] || '',
-      });
-
-
-
-      console.log(data.keys);
-    };
-
-    fetchKeys();
-  }, [username]);
-
-  useEffect(() => {
-    const checkKeys = async () => {
-        for (const [inputName, keyValue] of Object.entries(formState)) {
-            const response = await fetch(`/check-keys?key=${keyValue}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ keys: [keyValue], username }),
-            });
-
-            if (!response.ok) {
-                console.error('Failed to check keys');
-                return;
-            }
-
-            const data = await response.json();
-            console.log(data)
-            setInputColors(prevColors => ({
-                ...prevColors,
-                [inputName]: data.isValid ? 'green' : 'red',
-            }));
-        }
-    };
-
-    checkKeys();
-}, [formState, username]);
-
-  const handleInputChange = (event) => {
-    setFormState({
-      ...formState,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-
-
-    // Convert form state to array of keys
-    const keys = Object.values(formState);
-
-    // Send keys and username to backend
-    const response = await fetch('/add-keys', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ keys, username }),
-    });
-
-    if (!response.ok) {
-      console.error('Failed to add keys');
-      return;
-    }
-
-    const data = await response.json();
-    console.log(data.message);
-  };
-
-  const handleMoreInfo = async (event) => {
-    event.preventDefault();
-    console.log('Keys may display as invalid if your internet block Hypixel.api');
-    alert('Keys may display as invalid if your internet block Hypixel.api');
-  }
-
-  return (
-    <div className="page1">
-      <h1>API Keys</h1>
-      <div className="button-container">
-        <p>Red keys are invalid, you may need to go to your developer dashboard and regenerate the key</p> 
-        <button className="more-info-button" onClick={handleMoreInfo}>i</button>
-      </div>
-      <form onSubmit={handleSubmit}>
-          <input className="custom-text-input2" type="text" name="input1" value={formState.input1} onChange={handleInputChange} style={{ color: inputColors.input1 }} />
-          <input className="custom-text-input2" type="text" name="input2" value={formState.input2} onChange={handleInputChange} style={{ color: inputColors.input2 }} />
-          <input className="custom-text-input2" type="text" name="input3" value={formState.input3} onChange={handleInputChange} style={{ color: inputColors.input3 }} />
-          <input className="custom-text-input2" type="text" name="input4" value={formState.input4} onChange={handleInputChange} style={{ color: inputColors.input4 }} />
-          <input className="custom-text-input2" type="text" name="input5" value={formState.input5} onChange={handleInputChange} style={{ color: inputColors.input5 }} />
-    <div className="button-container">
-        <button type="submit" className="custom-button1">Update Keys</button>
-    </div>
-      </form>
-    </div>
-  );
-}
-
-function LogOut() {
-  const { username, setUsername, password, setPassword } = useContext(UserContext);
-  const navigate = useNavigate();
-
-  const onClick = () => {
-    // Log out the user
-    setUsername('');
-    setPassword('');
-    navigate('/home');
-
-  };
-
-  return (
-    <div className="page1">
-      <h1>Log Out</h1>
-      <button className="custom-button1" onClick={onClick}>Log Out</button>
-    </div>
-  );
-}
-
-function SignIn() {
-  const { username, setUsername, password, setPassword } = useContext(UserContext);
-  const [message, setMessage] = useState('');
-
+function JoinGame() {
+  const { setUsername } = useContext(UserContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const response = await fetch('/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        username: username,
-        password: password,
-      }),
-    });
-
-    if (response.ok) {
-      setMessage('Login successful');
-      navigate('/home');
+    const gameCode = event.target.elements.name.value;
+    const response = await fetch(`/check_game_code?code=${gameCode}`);
+    const isValidGameCode = await response.json();
+    if (isValidGameCode) {
+      navigate('/choosename');
     } else {
-      setMessage('Invalid username or password');
+      alert('Invalid game code');
     }
   };
 
   return (
     <div className="formPage">
-      <h1>Sign In</h1>
-      {message && <p>{message}</p>}
+      <h1>Join Game!</h1>
       <form onSubmit={handleSubmit} className="formPage">
         <input
           className="custom-text-input"
           type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Game Code"
+          name="name"
           required
         />
+        <button className="custom-button1" type="submit">Join</button>
+      </form>
+    </div>
+  );
+}
+
+function ChooseName() {
+  const navigate = useNavigate();
+  const { setUsername } = useContext(UserContext);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Assuming you have the player's name stored in a state or can retrieve it from the form
+    const playerName = event.target.elements.name.value;
+
+    // Prepare the data to be sent in the request
+    const playerData = {
+      name: playerName,
+    };
+
+    try {
+      // Send a POST request to the '/add_player' route
+      const response = await fetch('/add_player', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(playerData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Handle the response. For example, you can log the server's response message
+      const result = await response.text();
+      console.log(result);
+
+      // Set the username in the UserContext
+      setUsername(playerName);
+
+      // Navigate to the game screen after adding the player
+      navigate('/waitingroom');
+    } catch (error) {
+      console.error('Error adding player:', error);
+    }
+  };
+
+  return (
+    <div className="formPage">
+      <h1>Choose Name</h1>
+      <form onSubmit={handleSubmit} className="formPage">
         <input
           className="custom-text-input"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          type="text"
+          placeholder="Name"
+          name="name"
           required
         />
         <button className="custom-button1" type="submit">Submit</button>
       </form>
+    </div>
+  );
+}
+
+function GameScreen() {
+  const navigate = useNavigate();
+  const { username } = useContext(UserContext);
+  const [result, setResult] = useState('');
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    // Extract artist and song title values from the form inputs
+    const artist = event.target.elements.name[1].value;
+    const songTitle = event.target.elements.name[0].value;
+
+    // Prepare the data to be sent in the request
+    const data = { artist: artist, song: songTitle, username: username };
+
+    // Use fetch API to send a POST request to the server
+    fetch('/check_guess', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.text())
+      .then(result => {
+        // Handle the server's response
+        setResult(result);
+        if (result === 'Correct guess!') {
+          // window.location.reload();
+        }
+      })
+      .catch(error => {
+        // Handle any errors
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        navigate('/waitingforallplayers');
+      });
+  };
+
+  return (
+    <div className="formPage">
+      <h1>Welcome, {username}!</h1> {/* Display the player's username */}
+      <form onSubmit={handleSubmit} className="formPage">
+        <input
+          className="custom-text-input"
+          type="text"
+          placeholder="Song Title"
+          name="name"
+          required
+        />
+        <input
+          className="custom-text-input"
+          type="text"
+          placeholder="Artist"
+          name="name"
+          required
+        />
+        <button className="custom-button1" type="submit">Submit Answers</button>
+      </form>
+      {result && <p>{result}</p>}
+    </div>
+  );
+}
+
+function WaitingForAllPlayers() {
+  const [players, setPlayers] = useState([]);
+  const navigate = useNavigate();
+
+  const fetchPlayers = () => {
+    // Fetch the list of players connected to the game and their guesses
+    fetch('/players')
+      .then(response => response.json())
+      .then(data => {
+        const playersWithGuesses = data.players.filter(player => player.current_track_guess && player.current_artist_guess);
+        setPlayers(playersWithGuesses);
+      });
+  };
+
+useEffect(() => {
+  const fetchData = () => {
+    // Fetch players
+    fetch('/players')
+      .then(response => response.json())
+      .then(data => {
+        setPlayers(data.players);
+      });
+
+    // Check if a new song is playing
+    fetch('/nextpage')
+      .then(response => response.json())
+      .then(data => {
+        if (data.isPlaying) {
+          navigate('/waitingfornextsong');
+        }
+      });
+  };
+
+  fetchData(); // Initial fetch
+
+  const interval = setInterval(() => {
+    fetchData(); // Re-fetch every 5 seconds
+  }, 1000);
+
+  return () => {
+    clearInterval(interval);
+  };
+}, [navigate]);
+
+  return (
+    <div className="formPage">
+      <h1>Waiting for all players to answer</h1>
+      <h2>Guesses:</h2>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>
+            {`${player.name}: ${player.current_track_guess} by ${player.current_artist_guess}`}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function HostGame() {
+  const [gameCode, setGameCode] = useState('');
+  const [players, setPlayers] = useState([]);
+  const [isGameStarted, setIsGameStarted] = useState(false); // Add state for game start
+  const navigate = useNavigate();
+
+  const generateGameCode = () => {
+    // Generate a random game code on the server
+    fetch('/generate_code')
+      .then(response => response.text())
+      .then(code => {
+        setGameCode(code);
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  };
+
+  const fetchPlayers = () => {
+    // Fetch the list of players connected to the game
+    fetch('/players')
+      .then(response => response.json())
+      .then(data => {
+        // Only update state if data is not empty
+        if (data.players.length > 0) {
+          setPlayers(data.players);
+        } else {
+          setPlayers([]); // Clear the players state if data is empty
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+    const interval = setInterval(fetchPlayers, 1000); // Check for new players every 5 seconds
+
+    return () => {
+      clearInterval(interval); // Clean up the interval when the component is unmounted
+    };
+  }, []);
+
+  const startGame = () => {
+    // Perform any necessary actions to start the game
+    setIsGameStarted(true);
+    fetch('/setnextpage');
+    fetch('/play');
+    navigate('/waitinghostscreen');
+    // You can add additional logic here, such as sending a request to the server to start the game
+  };
+
+  return (
+    <div className="formPage">
+      <h1>Host Game</h1>
+      <button className="custom-button1" onClick={generateGameCode}>New Game</button>
+      {gameCode && <p>Game Code: {gameCode}</p>}
+      <h2>Players:</h2>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>{player.name}</li>
+        ))}
+      </ul>
+      {!isGameStarted && <button className="custom-button1" onClick={startGame}>Start Game</button>} {/* Add start game button */}
+    </div>
+  );
+}
+
+function WaitingForNewSong() {
+  const navigate = useNavigate();
+  const [players, setPlayers] = useState([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await fetch('/players');
+      const data = await response.json();
+      // Sort players based on score in descending order
+      const sortedPlayers = data.players.sort((a, b) => b.score - a.score);
+      setPlayers(sortedPlayers);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const checkNewSong = async () => {
+    try {
+      const response = await fetch('/nextpage');
+      const data = await response.json();
+      if (data.isPlaying) {
+        setIsPlaying(true);
+        navigate('/gamescreen');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+    const interval = setInterval(fetchPlayers, 1000); // Check for updated scores every 5 seconds
+    const songInterval = setInterval(checkNewSong, 1000); // Check for new song every 5 seconds
+    return () => {
+      clearInterval(interval); // Clean up the intervals when the component is unmounted
+      clearInterval(songInterval);
+    };
+  }, []);
+
+  return (
+    <div className="formPage">
+      <h1>Waiting for next song</h1>
+      <h2>Leaderboard:</h2>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>
+            {player.name} - Score: {player.score}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function WaitingHostScreen() {
+  const navigate = useNavigate();
+  const [players, setPlayers] = useState([]);
+
+  const handleNextSong = async () => {
+    try {
+      // Fetch the '/setnextpage' route to update the status on the server side
+      await fetch('/setnextpage');
+      navigate('/hostleaderboard'); // Navigate to the leaderboard page
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await fetch('/players');
+      const data = await response.json();
+      setPlayers(data.players.filter(player => player.current_track_guess !== null)); // Only display players who have guessed
+      console.log(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+    const interval = setInterval(fetchPlayers, 1000); // Check for updated scores every 5 seconds
+    return () => {
+      clearInterval(interval); // Clean up the interval when the component is unmounted
+    };
+  }, []);
+
+  return (
+    <div className="formPage">
+      <h1>Waiting for Guesses!</h1>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>
+            {player.name}
+          </li>
+        ))}
+      </ul>
+      <button className="custom-button1" onClick={handleNextSong}>Next</button>
+    </div>
+  );
+}
+
+function HostLeaderboardScreen() {
+  const navigate = useNavigate();
+  const [players, setPlayers] = useState([]);
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await fetch('/players');
+      const data = await response.json();
+      // Assuming the response is an object with a 'players' array inside it
+      setPlayers(data.players); // Adjust this line according to the actual structure
+    } catch (error) {
+      console.error('Error fetching players:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+    const interval = setInterval(fetchPlayers, 5000); // Fetch players every 5 seconds
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleNextSong = () => {
+    fetch('/reset_guesses');
+    fetch('/setnextpage');
+    fetch('/play');
+    navigate('/waitinghostscreen');
+  };
+
+  return (
+    <div className="formPage">
+      <h1>Host Leaderboard Screen</h1>
+      <button className="custom-button1" onClick={handleNextSong}>Next Song</button>
+      <h2>Leaderboard:</h2>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>
+            {player.name} - Score: {player.score}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+
+
+function WaitingRoom() {
+  const [players, setPlayers] = useState([]);
+  const navigate = useNavigate();
+
+  const fetchPlayers = () => {
+    // Fetch the list of players connected to the game
+    fetch('/players')
+      .then(response => response.json())
+      .then(data => {
+        // Only update state if data is not empty
+        if (data.players.length > 0) {
+          setPlayers(data.players);
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  };
+
+  useEffect(() => {
+    fetchPlayers();
+    const interval = setInterval(fetchPlayers, 1000); // Check for new players every 5 seconds
+
+    const checkNewSong = async () => {
+      try {
+        const response = await fetch('/nextpage');
+        const data = await response.json();
+        if (data.isPlaying) {
+          navigate('/gamescreen');
+        }
+      } catch (error) {
+        console.error('Error checking new song:', error);
+      }
+    };
+
+    const songInterval = setInterval(checkNewSong, 1000); // Check for new song every 5 seconds
+
+    return () => {
+      clearInterval(interval); // Clean up the player interval when the component is unmounted
+      clearInterval(songInterval); // Clean up the song interval when the component is unmounted
+    };
+  }, [navigate]);
+
+  return (
+    <div className="formPage">
+      <h1>Waiting for game to start</h1>
+      <h2>Players:</h2>
+      <ul>
+        {players.map(player => (
+          <li key={player.id}>{player.name}</li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -332,11 +513,7 @@ const HamburgerMenu = () => {
       </button>
       {isOpen && (
         <div className="menu">
-          <div><Link className="menu-link" to="/home">Home</Link></div>
-          <div><Link className="menu-link" to="/profile">Profile</Link></div>
-          <div><a className="menu-link" href="#">About</a></div>
-          <div><Link className="menu-link" to="/signin">Sign in</Link></div>
-          <div><a className="menu-link" href="logout">Log Out</a></div>
+          <div><Link className="menu-link" to="/joingame">Join Game</Link></div>
         </div>
       )}
     </div>
@@ -346,22 +523,26 @@ const HamburgerMenu = () => {
 export const UserContext = createContext();
 
 function App() {
-  // Create state variables
+
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
 
   return (
-    <UserContext.Provider value={{ username, setUsername, password, setPassword }}>
+    <UserContext.Provider value={{ username, setUsername }}>
       <Router>
         <div>
           <HamburgerMenu />
           <Routes>
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/logout" element={<LogOut />} />
-            <Route path="/home" element={<StartPage />} />
-            <Route path="*" element={<SignIn />} />
+            <Route path="/joingame" element={<JoinGame />} />
+            <Route path="/choosename" element={<ChooseName />} />
+            <Route path="*" element={<JoinGame />} />
+            <Route path="/" element={<JoinGame />} />
+            <Route path="/gamescreen" element={<GameScreen />} />
+            <Route path="/host" element={<HostGame />} />
+            <Route path="/waitingroom" element={<WaitingRoom />} />
+            <Route path="/waitinghostscreen" element={<WaitingHostScreen />} />
+            <Route path="/waitingfornextsong" element={<WaitingForNewSong />} />
+            <Route path="/waitingforallplayers" element={<WaitingForAllPlayers />} />
+            <Route path="/hostleaderboard" element={<HostLeaderboardScreen />} />
           </Routes>
         </div>
       </Router>
